@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive RMITO Project Timeline</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            margin: 20px;
+            background-color: #f8fafc;
+        }
+        
+        .gantt-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        
+        .gantt-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .controls {
+            padding: 20px;
+            background: #f1f5f9;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .control-group {
+            display: inline-block;
+            margin-right: 20px;
+            margin-bottom: 10px;
+        }
+        
+        .control-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: #475569;
+            margin-bottom: 4px;
+        }
+        
+        .control-group select, .control-group button {
+            padding: 6px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            background: white;
+            font-size: 14px;
+        }
+        
+        .control-group button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .control-group button:hover {
+            background: #2563eb;
+        }
+        
+        .gantt-chart {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            min-height: 600px;
+        }
+        
+        .course-labels {
+            background-color: #f8fafc;
+            border-right: 2px solid #e2e8f0;
+        }
+        
+        .timeline-area {
+            background-color: white;
+            position: relative;
+            overflow-x: auto;
+        }
+        
+        .course-row {
+            height: 100px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 10px 20px;
+        }
+        
+        .course-title {
+            font-weight: 600;
+            color: #1e293b;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+        
+        .course-type {
+            font-size: 11px;
+            background-color: #3b82f6;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 10px;
+            display: inline-block;
+            margin-bottom: 6px;
+        }
+        
+        .smt .course-type {
+            background-color: #10b981;
+        }
+        
+        .course-details {
+            font-size: 11px;
+            color: #64748b;
+            line-height: 1.3;
+        }
+        
+        .phase-dropdown {
+            margin-top: 6px;
+        }
+        
+        .phase-dropdown select {
+            width: 100%;
+            padding: 4px 8px;
+            font-size: 11px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+        }
+        
+        .timeline-grid {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            min-width: 800px;
+        }
+        
+        .month-header {
+            height: 50px;
+            border-bottom: 2px solid #e2e8f0;
+            display: flex;
+            background: #f8fafc;
+        }
+        
+        .month {
+            flex: 1;
+            text-align: center;
+            padding: 15px 10px;
+            font-weight: 600;
+            color: #475569;
+            border-right: 1px solid #e2e8f0;
+        }
+        
+        .timeline-row {
+            height: 100px;
+            border-bottom: 1px solid #e2e8f0;
+            position: relative;
+            display: flex;
+        }
+        
+        .month-column {
+            flex: 1;
+            border-right: 1px solid #f1f5f9;
+            position: relative;
+        }
+        
+        .phase-bar {
+            position: absolute;
+            height: 18px;
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            padding: 0 8px;
+            font-size: 10px;
+            font-weight: 500;
+            color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .phase-bar:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        .design-phase {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            top: 15px;
+        }
+        
+        .build-phase {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            top: 40px;
+        }
+        
+        .project-complete {
+            background: linear-gradient(135deg, #10b981, #059669);
+            top: 65px;
+            height: 12px;
+            border-radius: 6px;
+        }
+        
+        .phase-info {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: #1f2937;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+            z-index: 100;
+        }
+        
+        .phase-bar:hover .phase-info {
+            opacity: 1;
+        }
+        
+        /* Course-specific positioning - Original version */
+        .mktg-research .design-phase, .mktg-leadership .design-phase {
+            left: 24%; width: 15%;
+        }
+        .mktg-research .build-phase, .mktg-leadership .build-phase {
+            left: 41%; width: 47%;
+        }
+        .mktg-research .project-complete, .mktg-leadership .project-complete {
+            left: 88%; width: 1%;
+        }
+        
+        .busm .design-phase, .inte .design-phase {
+            left: 18%; width: 9%;
+        }
+        .busm .build-phase, .inte .build-phase {
+            left: 29%; width: 15%;
+        }
+        .busm .project-complete, .inte .project-complete {
+            left: 44%; width: 1%;
+        }
+        
+        .legend {
+            padding: 20px;
+            background-color: #f8fafc;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .legend-color {
+            width: 20px;
+            height: 12px;
+            border-radius: 6px;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        .stats-panel {
+            background: #f1f5f9;
+            padding: 15px;
+            margin: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #3b82f6;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 10px;
+        }
+        
+        .stat-item {
+            background: white;
+            padding: 12px;
+            border-radius: 6px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1e293b;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="gantt-container">
+        <div class="gantt-header">
+            <h1>Interactive RMITO Project Timeline - FY26 Q1</h1>
+            <p>Course Development Pipeline | September - December 2024</p>
+        </div>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label>Filter by Project Type:</label>
+                <select id="typeFilter">
+                    <option value="all">All Projects</option>
+                    <option value="cr">Course Refresh (CR)</option>
+                    <option value="smt">Super Maintenance (SMT)</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label>Filter by Resource:</label>
+                <select id="resourceFilter">
+                    <option value="all">All Resources</option>
+                    <option value="internal">Internal RMITO</option>
+                    <option value="contractor">Contractor</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label>Show/Hide Phases:</label>
+                <select id="phaseFilter">
+                    <option value="all">All Phases</option>
+                    <option value="design">Design/Scope Only</option>
+                    <option value="build">Development/Build Only</option>
+                    <option value="complete">Completion Only</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <button onclick="resetFilters()">Reset All Filters</button>
+            </div>
+        </div>
+        
+        <div class="stats-panel">
+            <h3>Project Statistics</h3>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-value" id="totalProjects">4</div>
+                    <div class="stat-label">Total Projects</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="internalHours">50</div>
+                    <div class="stat-label">Internal RMITO Hours</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="totalContractorHours">150</div>
+                    <div class="stat-label">Contractor Hours</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="projectsCompletingOct">2</div>
+                    <div class="stat-label">Completing in October</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="gantt-chart">
+            <div class="course-labels">
+                <div class="course-row" data-type="cr" data-resource="contractor">
+                    <div class="course-type">CR</div>
+                    <div class="course-title">MKTG1395 Marketing Research</div>
+                    <div class="course-details">15 Internal hrs | 50 Contractor hrs</div>
+                    <div class="phase-dropdown">
+                        <select onchange="togglePhaseDetails('mktg-research', this.value)">
+                            <option value="all">All Phases</option>
+                            <option value="design">Design/Scope</option>
+                            <option value="build">Development/Build</option>
+                            <option value="complete">Project Complete</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="course-row" data-type="cr" data-resource="contractor">
+                    <div class="course-type">CR</div>
+                    <div class="course-title">MKTG1395 Leadership</div>
+                    <div class="course-details">15 Internal hrs | 50 Contractor hrs</div>
+                    <div class="phase-dropdown">
+                        <select onchange="togglePhaseDetails('mktg-leadership', this.value)">
+                            <option value="all">All Phases</option>
+                            <option value="design">Design/Scope</option>
+                            <option value="build">Development/Build</option>
+                            <option value="complete">Project Complete</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="course-row smt" data-type="smt" data-resource="contractor">
+                    <div class="course-type">SMT</div>
+                    <div class="course-title">BUSM4505 Professional HRM</div>
+                    <div class="course-details">10 Internal hrs | 25 Contractor hrs</div>
+                    <div class="phase-dropdown">
+                        <select onchange="togglePhaseDetails('busm', this.value)">
+                            <option value="all">All Phases</option>
+                            <option value="design">Design/Scope</option>
+                            <option value="build">Development/Build</option>
+                            <option value="complete">Project Complete</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="course-row smt" data-type="smt" data-resource="contractor">
+                    <div class="course-type">SMT</div>
+                    <div class="course-title">INTE2584 Cyber Security</div>
+                    <div class="course-details">10 Internal hrs | 25 Contractor hrs</div>
+                    <div class="phase-dropdown">
+                        <select onchange="togglePhaseDetails('inte', this.value)">
+                            <option value="all">All Phases</option>
+                            <option value="design">Design/Scope</option>
+                            <option value="build">Development/Build</option>
+                            <option value="complete">Project Complete</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="timeline-area">
+                <div class="timeline-grid">
+                    <div class="month-header">
+                        <div class="month">September</div>
+                        <div class="month">October</div>
+                        <div class="month">November</div>
+                        <div class="month">December</div>
+                    </div>
+                    
+                    <div class="timeline-row mktg-research">
+                        <div class="month-column"></div>
+                        <div class="month-column"></div>
+                        <div class="month-column"></div>
+                        <div class="month-column"></div>
+                        <div class="phase-bar design-phase" data-phase="design">
+                            <span>Design/Scope</span>
+                            <div class="phase-info">29 Sept - 17 Oct | 2.5 weeks | 15 hrs | Internal RMITO</div>
+                        </div>
+                        <div class="phase-bar build-phase" data-phase="build">
+                            <span>Development/Build</span>
+                            <div class="phase-info">20 Oct - 17 Dec | 8.5 weeks | 50 hrs | Contractor</div>
+                        </div>
+                        <div class="phase-bar project-complete" data-phase="complete">
+                            <span>Complete</span>
+                            <div class="phase-info">17 Dec | Project Complete</div>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-row mktg-leadership">
+                        <div class="month-column"></div>
+                        <div class="month-column"></div>
+                        <div class="month-column"></div>
+                        <div class="month-column"></div>
+                        <div class="phase-bar design-phase" data-phase="design">
+                            <span>Design/Scope</span>
+                            <div class="phase-info">29 Sept - 17 Oct | 2.5 weeks | 15 hrs | Internal RMITO</div>
+                        </div>
+                        <div class="phase-bar build-phase" data-phase="build">
+                            <span>Development/Build</span>
+                            <div class="phase-info">20 Oct - 17 Dec | 8.5 weeks | 50 hrs | Contractor</div>
+                        </div>
+                        <div class="phase-bar project-complete" data-phase="complete">
+                            <span>Complete</span>
+                            <div class="phase-info">17 Dec | Project Complete</div>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-row busm">
+                        <div class="month-column"></div>
+                        <div class="month-column"></div>
+                        <div class="month-column"></div>
+                        <div class="month-column"></div>
+                        <div class="phase-bar design-phase" data-phase="design">
+                            <span>Design/Scope</span>
+                            <div class="phase-info">22 Sept - 3 Oct | 2 weeks | 10 hrs | Internal RMITO</div>
+                        </div>
+                        <div class="phase-bar build-phase" data-phase="build">
+                            <span>Development/Build</span>
+                            <div class="phase-info">6 Oct - 24 Oct | 2.5 weeks | 25 hrs | Contractor</div>
+                        </div>
+                        <div class="phase-bar project-complete" data-phase="complete">
+                            <span>Complete</span>
+                            <div class="phase-info">24 Oct | Project Complete</div>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-row inte">
+                        <div class="month-column"></div>
+                        <div class="month-column"></div>
+                        <div class="month-column"></div>
+                        <div class="month-column"></div>
+                        <div class="phase-bar design-phase" data-phase="design">
+                            <span>Design/Scope</span>
+                            <div class="phase-info">22 Sept - 3 Oct | 2 weeks | 10 hrs | Internal RMITO</div>
+                        </div>
+                        <div class="phase-bar build-phase" data-phase="build">
+                            <span>Development/Build</span>
+                            <div class="phase-info">6 Oct - 24 Oct | 2.5 weeks | 25 hrs | Contractor</div>
+                        </div>
+                        <div class="phase-bar project-complete" data-phase="complete">
+                            <span>Complete</span>
+                            <div class="phase-info">24 Oct | Project Complete</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background: linear-gradient(135deg, #f59e0b, #d97706);"></div>
+                <span>Design/Scope Phase</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);"></div>
+                <span>Development/Build Phase</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: linear-gradient(135deg, #10b981, #059669);"></div>
+                <span>Project Complete</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #3b82f6;"></div>
+                <span>Course Refresh (CR)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #10b981;"></div>
+                <span>Super Maintenance (SMT)</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function togglePhaseDetails(courseClass, phaseType) {
+            const courseRow = document.querySelector(`.${courseClass}`);
+            const phases = courseRow.querySelectorAll('.phase-bar');
+            
+            phases.forEach(phase => {
+                if (phaseType === 'all') {
+                    phase.style.display = 'flex';
+                } else {
+                    const phaseData = phase.getAttribute('data-phase');
+                    phase.style.display = phaseData === phaseType ? 'flex' : 'none';
+                }
+            });
+        }
+        
+        function filterByType() {
+            const typeFilter = document.getElementById('typeFilter').value;
+            const rows = document.querySelectorAll('.course-row');
+            const timelineRows = document.querySelectorAll('.timeline-row');
+            
+            rows.forEach((row, index) => {
+                const rowType = row.getAttribute('data-type');
+                if (typeFilter === 'all' || rowType === typeFilter) {
+                    row.style.display = 'flex';
+                    timelineRows[index].style.display = 'flex';
+                } else {
+                    row.style.display = 'none';
+                    timelineRows[index].style.display = 'none';
+                }
+            });
+        }
+        
+        function filterByResource() {
+            const resourceFilter = document.getElementById('resourceFilter').value;
+            const rows = document.querySelectorAll('.course-row');
+            const timelineRows = document.querySelectorAll('.timeline-row');
+            
+            rows.forEach((row, index) => {
+                const rowResource = row.getAttribute('data-resource');
+                if (resourceFilter === 'all' || rowResource === resourceFilter) {
+                    row.style.display = 'flex';
+                    timelineRows[index].style.display = 'flex';
+                } else {
+                    row.style.display = 'none';
+                    timelineRows[index].style.display = 'none';
+                }
+            });
+        }
+        
+        function filterByPhase() {
+            const phaseFilter = document.getElementById('phaseFilter').value;
+            const allPhaseBars = document.querySelectorAll('.phase-bar');
+            
+            allPhaseBars.forEach(phase => {
+                if (phaseFilter === 'all') {
+                    phase.style.display = 'flex';
+                } else {
+                    const phaseData = phase.getAttribute('data-phase');
+                    phase.style.display = phaseData === phaseFilter ? 'flex' : 'none';
+                }
+            });
+        }
+        
+        function resetFilters() {
+            document.getElementById('typeFilter').value = 'all';
+            document.getElementById('resourceFilter').value = 'all';
+            document.getElementById('phaseFilter').value = 'all';
+            
+            const rows = document.querySelectorAll('.course-row');
+            const timelineRows = document.querySelectorAll('.timeline-row');
+            const allPhaseBars = document.querySelectorAll('.phase-bar');
+            const allDropdowns = document.querySelectorAll('.phase-dropdown select');
+            
+            rows.forEach(row => row.style.display = 'flex');
+            timelineRows.forEach(row => row.style.display = 'flex');
+            allPhaseBars.forEach(phase => phase.style.display = 'flex');
+            allDropdowns.forEach(dropdown => dropdown.value = 'all');
+        }
+        
+        // Add event listeners
+        document.getElementById('typeFilter').addEventListener('change', filterByType);
+        document.getElementById('resourceFilter').addEventListener('change', filterByResource);
+        document.getElementById('phaseFilter').addEventListener('change', filterByPhase);
+    </script>
+</body>
+</html>
