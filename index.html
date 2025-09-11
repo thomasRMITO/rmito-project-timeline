@@ -223,7 +223,7 @@
             opacity: 1;
         }
         
-        /* Course-specific positioning - Original version */
+        /* Course-specific positioning */
         .mktg-research .design-phase, .mktg-leadership .design-phase {
             left: 24%; width: 15%;
         }
@@ -242,6 +242,16 @@
         }
         .busm .project-complete, .inte .project-complete {
             left: 44%; width: 1%;
+        }
+        
+        .dmk102 .design-phase {
+            left: 30%; width: 7%;
+        }
+        .dmk102 .build-phase {
+            left: 37%; width: 14%;
+        }
+        .dmk102 .project-complete {
+            left: 51%; width: 1%;
         }
         
         .legend {
@@ -346,11 +356,11 @@
             <h3>Project Statistics</h3>
             <div class="stats-grid">
                 <div class="stat-item">
-                    <div class="stat-value" id="totalProjects">4</div>
+                    <div class="stat-value" id="totalProjects">5</div>
                     <div class="stat-label">Total Projects</div>
                 </div>
                 <div class="stat-item">
-                    <div class="stat-value" id="internalHours">50</div>
+                    <div class="stat-value" id="internalHours">115</div>
                     <div class="stat-label">Internal RMITO Hours</div>
                 </div>
                 <div class="stat-item">
@@ -358,7 +368,7 @@
                     <div class="stat-label">Contractor Hours</div>
                 </div>
                 <div class="stat-item">
-                    <div class="stat-value" id="projectsCompletingOct">2</div>
+                    <div class="stat-value" id="projectsCompletingOct">3</div>
                     <div class="stat-label">Completing in October</div>
                 </div>
             </div>
@@ -414,6 +424,20 @@
                     <div class="course-details">10 Internal hrs | 25 Contractor hrs</div>
                     <div class="phase-dropdown">
                         <select onchange="togglePhaseDetails('inte', this.value)">
+                            <option value="all">All Phases</option>
+                            <option value="design">Design/Scope</option>
+                            <option value="build">Development/Build</option>
+                            <option value="complete">Project Complete</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="course-row smt" data-type="smt" data-resource="internal">
+                    <div class="course-type">SMT</div>
+                    <div class="course-title">DMK102 Implementing DM Campaigns</div>
+                    <div class="course-details">65 Internal hrs | 0 Contractor hrs</div>
+                    <div class="phase-dropdown">
+                        <select onchange="togglePhaseDetails('dmk102', this.value)">
                             <option value="all">All Phases</option>
                             <option value="design">Design/Scope</option>
                             <option value="build">Development/Build</option>
@@ -507,18 +531,15 @@
                             <div class="phase-info">24 Oct | Project Complete</div>
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
-
-         <div class="timeline-row FS DMK102">
+                    
+                    <div class="timeline-row dmk102">
                         <div class="month-column"></div>
                         <div class="month-column"></div>
                         <div class="month-column"></div>
                         <div class="month-column"></div>
                         <div class="phase-bar design-phase" data-phase="design">
                             <span>Design/Scope</span>
-                            <div class="phase-info">6 Oct - 13 Oct | 1 weeks | 15 hrs | Internal RMITO</div>
+                            <div class="phase-info">6 Oct - 12 Oct | 1 week | 15 hrs | Internal RMITO</div>
                         </div>
                         <div class="phase-bar build-phase" data-phase="build">
                             <span>Development/Build</span>
@@ -526,9 +547,13 @@
                         </div>
                         <div class="phase-bar project-complete" data-phase="complete">
                             <span>Complete</span>
-                            <div class="phase-info">29 Oct | Project Complete</div>
+                            <div class="phase-info">27 Oct | Project Complete</div>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+        
         <div class="legend">
             <div class="legend-item">
                 <div class="legend-color" style="background: linear-gradient(135deg, #f59e0b, #d97706);"></div>
